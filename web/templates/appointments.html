@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, status_badge %}
+{% block title %}Приём руководителя{% endblock %}
+{% block h1 %}Приём руководителя{% endblock %}
+{% block content %}
+{% if user.role != 'secretary' %}
+<div class="tabs">
+  {% for k, v in STATUSES.items() %}<a class="{{ 'active' if status == k }}" href="/appointments?status={{ k }}">{{ v }} <span class="count">{{ counts.get(k, 0) }}</span></a>{% endfor %}
+  <a class="{{ 'active' if status == 'all' }}" href="/appointments?status=all">Все</a>
+</div>
+{% else %}<p class="muted">Подтверждённые приёмы, на которые нужно подготовиться.</p>{% endif %}
+
+{% for day in days %}
+<section class="day">
+  <h3>{{ day.date }} <span class="muted">{{ day.weekday }}</span></h3>
+  <div class="grid g-3">
+  {% for p in day['items'] %}
+    <article class="card appt">
+      <div class="appt-time">{{ p.appointment_time }}</div>
+      <div class="appt-body">
+        <div class="row between"><b>{{ p.full_name }}</b>{{ status_badge(p.status) }}</div>
+        <div class="muted small">{{ p.phone }}</div>
+        <p>{{ p.reason }}</p>
+        {% if p.decided_at %}<div class="muted small">Решение: {{ p.decided_by or '—' }}, {{ p.decided_at|dt }}</div>{% endif %}
+        {% if can_decide and p.status == 'kutilmoqda' %}
+        <div class="row">
+          <form method="post" action="/appointments/{{ p.id }}/confirm"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn btn-primary" type="submit">{{ icon("check") }}Подтвердить</button></form>
+          <form method="post" action="/appointments/{{ p.id }}/reject" data-confirm="Отклонить запись на приём?"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn btn-danger-ghost" type="submit">{{ icon("x") }}Отклонить</button></form>
+        </div>{% endif %}
+      </div>
+    </article>
+  {% endfor %}
+  </div>
+</section>
+{% else %}
+<div class="card empty muted">Записей нет.</div>
+{% endfor %}
+{% endblock %}

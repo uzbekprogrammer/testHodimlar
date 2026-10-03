@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, pager %}
+{% block title %}История действий{% endblock %}
+{% block h1 %}История действий{% endblock %}
+{% block actions %}{% if user.role == 'superadmin' %}<a class="btn btn-ghost" href="/audit/export.csv{{ '?' ~ qs if qs }}">{{ icon("download") }}CSV</a>{% endif %}{% endblock %}
+{% block content %}
+<form class="filters card" method="get">
+  <label class="field grow"><span>Поиск</span><input name="q" value="{{ flt.q }}" placeholder="Кто, детали, №" maxlength="80"></label>
+  <label class="field"><span>Источник</span><select name="source" data-autosubmit><option value="">Все</option><option value="web" {{ 'selected' if flt.source == 'web' }}>Сайт</option><option value="bot" {{ 'selected' if flt.source == 'bot' }}>Бот</option><option value="system" {{ 'selected' if flt.source == 'system' }}>Система</option></select></label>
+  <label class="field"><span>Действие</span><select name="action" data-autosubmit><option value="">Все</option>{% for k, v in ACTIONS.items() %}<option value="{{ k }}" {{ 'selected' if flt.action == k }}>{{ v }}</option>{% endfor %}</select></label>
+  <label class="field"><span>С</span><input type="date" name="from" value="{{ flt.date_from }}"></label>
+  <label class="field"><span>По</span><input type="date" name="to" value="{{ flt.date_to }}"></label>
+  <button class="btn btn-primary" type="submit">{{ icon("search") }}Найти</button>
+</form>
+<div class="card flush">
+  {% if rows %}<div class="table-wrap"><table class="table">
+    <thead><tr><th>Время</th><th>Источник</th><th>Кто</th><th>Действие</th><th>Объект</th><th>Детали</th><th>IP</th></tr></thead>
+    <tbody>{% for r in rows %}<tr>
+      <td class="nowrap muted">{{ r.ts|dt }}</td>
+      <td><span class="tl-src s-{{ r.source }}">{{ {'bot':'Бот','web':'Сайт','system':'Система'}[r.source] }}</span></td>
+      <td><b>{{ r.actor_name or '—' }}</b>{% if r.actor_role %}<div class="muted small">{{ ROLE_LABELS.get(r.actor_role, r.actor_role) }}</div>{% endif %}</td>
+      <td class="{{ 'text-danger' if r.action == 'login_failed' }}">{{ ACTIONS.get(r.action, r.action) }}</td>
+      <td>{% if r.entity == 'appeal' and r.entity_id %}<a href="/appeals/{{ r.entity_id }}">обращение #{{ r.entity_id }}</a>{% elif r.entity %}{{ r.entity }}{% if r.entity_id %} #{{ r.entity_id }}{% endif %}{% else %}—{% endif %}</td>
+      <td class="details">{{ r.details or '' }}</td>
+      <td class="muted nowrap">{{ r.ip or '' }}</td>
+    </tr>{% endfor %}</tbody></table></div>
+  {% else %}<p class="empty muted">Записей нет.</p>{% endif %}
+</div>
+<p class="muted small">Всего записей: {{ total }}</p>
+{{ pager(page, pages, '/audit' ~ ('?' ~ qs if qs else '')) }}
+{% endblock %}

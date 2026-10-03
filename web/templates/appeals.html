@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, type_badge, status_badge, pager %}
+{% block title %}Обращения{% endblock %}
+{% block h1 %}Обращения{% endblock %}
+{% block actions %}<a class="btn btn-ghost" href="/appeals/export.csv{{ '?' ~ qs if qs }}">{{ icon("download") }}CSV</a>{% endblock %}
+{% block content %}
+<div class="tabs">
+  <a class="{{ 'active' if not flt.status }}" href="/appeals">Все</a>
+  {% for k, v in STATUSES.items() %}<a class="{{ 'active' if flt.status == k }}" href="/appeals?status={{ k }}">{{ v }} <span class="count">{{ counts.get(k, 0) }}</span></a>{% endfor %}
+</div>
+<form class="filters card" method="get">
+  <label class="field grow"><span>Поиск</span><input name="q" value="{{ flt.q }}" placeholder="{{ '№, текст, Ф.И.О.' if see_text else '№ или Ф.И.О.' }}" maxlength="100"></label>
+  <label class="field"><span>Тип</span><select name="type" data-autosubmit><option value="">Все</option>{% for k, v in TYPES.items() %}<option value="{{ k }}" {{ 'selected' if flt.type == k }}>{{ v }}</option>{% endfor %}</select></label>
+  <label class="field"><span>Статус</span><select name="status" data-autosubmit><option value="">Все</option>{% for k, v in STATUSES.items() %}<option value="{{ k }}" {{ 'selected' if flt.status == k }}>{{ v }}</option>{% endfor %}</select></label>
+  <label class="field"><span>С</span><input type="date" name="from" value="{{ flt['from'] }}"></label>
+  <label class="field"><span>По</span><input type="date" name="to" value="{{ flt.to }}"></label>
+  <label class="field"><span>Сортировка</span><select name="sort" data-autosubmit><option value="new" {{ 'selected' if sort == 'new' }}>Сначала новые</option><option value="old" {{ 'selected' if sort == 'old' }}>Сначала старые</option><option value="status" {{ 'selected' if sort == 'status' }}>По статусу</option></select></label>
+  <button class="btn btn-primary" type="submit">{{ icon("search") }}Найти</button>
+</form>
+
+<div class="card flush">
+  {% if rows %}
+  <div class="table-wrap"><table class="table table-hover">
+    <thead><tr><th>№</th><th>Тип</th><th>Статус</th><th>Автор</th>{% if see_text %}<th>Текст</th>{% endif %}<th>Создано</th><th>Ответ</th></tr></thead>
+    <tbody>
+    {% for a in rows %}<tr>
+      <td><a class="strong" href="/appeals/{{ a.id }}">#{{ a.id }}</a>{% if a.file_type %} <span class="muted" title="Есть вложение">{{ icon("paperclip") }}</span>{% endif %}</td>
+      <td>{{ type_badge(a.appeal_type) }}</td>
+      <td>{{ status_badge(a.status) }}</td>
+      <td>{{ 'Аноним' if a.appeal_type == 'corruption' else a.full_name }}</td>
+      {% if see_text %}<td class="preview">{{ a.preview or '—' }}</td>{% endif %}
+      <td class="nowrap muted">{{ a.created_at|dt }}</td>
+      <td class="nowrap muted">{{ a.answered_at|dt if a.answered_at else '—' }}</td>
+    </tr>{% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}<p class="empty muted">Ничего не найдено. Измените фильтры.</p>{% endif %}
+</div>
+<p class="muted small">Найдено: {{ total }}</p>
+{{ pager(page, pages, '/appeals' ~ ('?' ~ qs if qs else '')) }}
+{% endblock %}

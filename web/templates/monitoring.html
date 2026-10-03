@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, type_badge, status_badge, bar_chart %}
+{% block title %}Мониторинг{% endblock %}
+{% block h1 %}Мониторинг{% endblock %}
+{% block content %}
+<section class="kpis">
+  <div class="kpi {{ 'k-green' if bot.ok else 'k-red' }}"><span class="kpi-label">Telegram-бот</span><b class="kpi-val sm">{{ 'Онлайн' if bot.ok else 'Недоступен' }}</b><span class="kpi-sub">{% if bot.ok %}@{{ bot.username }} · отклик {{ bot.ping_ms }} мс{% else %}проверьте токен и сеть{% endif %}</span></div>
+  <div class="kpi"><span class="kpi-label">Время работы</span><b class="kpi-val sm">{{ uptime }}</b><span class="kpi-sub">с момента запуска</span></div>
+  <div class="kpi"><span class="kpi-label">База данных</span><b class="kpi-val sm">{{ m.db_size_mb }} МБ</b><span class="kpi-sub">действий за 24 ч: {{ m.audit_24h }}</span></div>
+  <div class="kpi"><span class="kpi-label">Активные сессии сайта</span><b class="kpi-val sm">{{ m.sessions }}</b><span class="kpi-sub">неудачных входов за 24 ч: <b class="{{ 'text-danger' if m.failed_logins_24h > 5 }}">{{ m.failed_logins_24h }}</b></span></div>
+</section>
+
+<section class="grid g-2">
+  <div class="card">
+    <div class="card-head"><h2>Сроки ответа (без ответа)</h2></div>
+    {% set total = (m.sla.fresh + m.sla.warn + m.sla.overdue) or 1 %}
+    <ul class="meter-list">
+      <li><span>До 4 часов</span><svg class="meter" viewBox="0 0 100 8" preserveAspectRatio="none"><rect class="m-bg" width="100" height="8" rx="4"/><rect class="m-ok" width="{{ (m.sla.fresh * 100 / total)|round(1) }}" height="8" rx="4"/></svg><b>{{ m.sla.fresh }}</b></li>
+      <li><span>4–24 часа</span><svg class="meter" viewBox="0 0 100 8" preserveAspectRatio="none"><rect class="m-bg" width="100" height="8" rx="4"/><rect class="m-warn" width="{{ (m.sla.warn * 100 / total)|round(1) }}" height="8" rx="4"/></svg><b>{{ m.sla.warn }}</b></li>
+      <li><span>Просрочено &gt; 24 ч</span><svg class="meter" viewBox="0 0 100 8" preserveAspectRatio="none"><rect class="m-bg" width="100" height="8" rx="4"/><rect class="m-bad" width="{{ (m.sla.overdue * 100 / total)|round(1) }}" height="8" rx="4"/></svg><b>{{ m.sla.overdue }}</b></li>
+    </ul>
+    <p class="muted small">Среднее время ответа: <b>{{ o.avg_hours }} ч</b></p>
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>Исполнители</h2></div>
+    {% if m.responders %}<table class="table"><thead><tr><th>Кто отвечал</th><th>Ответов</th><th>Ср. время</th></tr></thead><tbody>
+      {% for r in m.responders %}<tr><td>{{ r.who }}</td><td>{{ r.n }}</td><td>{{ r.avg_h }} ч</td></tr>{% endfor %}</tbody></table>
+    {% else %}<p class="muted pad">Ответов пока нет.</p>{% endif %}
+  </div>
+</section>
+
+<section class="grid g-2">
+  <div class="card"><div class="card-head"><h2>Активность по часам суток</h2></div>{{ bar_chart(hours) }}</div>
+  <div class="card">
+    <div class="card-head"><h2>Обращения по отделам</h2><span class="muted small">без коррупционных</span></div>
+    {% if m.departments %}{% set mx = m.departments[0].n or 1 %}
+    <ul class="meter-list">{% for d in m.departments %}<li><span>{{ d.dep }}</span><svg class="meter" viewBox="0 0 100 8" preserveAspectRatio="none"><rect class="m-bg" width="100" height="8" rx="4"/><rect class="m-ok" width="{{ (d.n * 100 / mx)|round(1) }}" height="8" rx="4"/></svg><b>{{ d.n }}</b></li>{% endfor %}</ul>
+    {% else %}<p class="muted pad">Нет данных.</p>{% endif %}
+  </div>
+</section>
+
+<section class="card flush">
+  <div class="card-head pad"><h2>Просроченные обращения</h2><a class="link" href="/appeals?status=yangi">Все новые →</a></div>
+  {% if overdue %}<table class="table table-hover"><tbody>{% for a in overdue %}<tr>
+    <td><a class="strong" href="/appeals/{{ a.id }}">#{{ a.id }}</a></td><td>{{ type_badge(a.appeal_type) }}</td><td>{{ status_badge(a.status) }}</td>
+    <td class="muted">{{ a.created_at|ago }}</td></tr>{% endfor %}</tbody></table>
+  {% else %}<p class="muted pad">Просроченных обращений нет — отлично.</p>{% endif %}
+</section>
+{% endblock %}

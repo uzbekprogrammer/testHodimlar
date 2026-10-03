@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block title %}{{ title }}{% endblock %}
+{% block h1 %}{{ title }}{% endblock %}
+{% block content %}
+<div class="card empty"><div class="err-code">{{ code }}</div><h2>{{ title }}</h2><p class="muted">{{ text }}</p><a class="btn btn-primary" href="/">На главную</a></div>
+{% endblock %}
+{% block bare %}
+<div class="login-panel solo"><div class="card empty"><div class="err-code">{{ code }}</div><h2>{{ title }}</h2><p class="muted">{{ text }}</p><a class="btn btn-primary" href="/login">Войти</a></div></div>
+{% endblock %}

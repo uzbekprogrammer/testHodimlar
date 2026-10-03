@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, type_badge, status_badge %}
+{% block title %}Обращение #{{ a.id }}{% endblock %}
+{% block h1 %}Обращение #{{ a.id }}{% endblock %}
+{% block actions %}<a class="btn btn-ghost" href="/appeals">← К списку</a>{% endblock %}
+{% block content %}
+<div class="grid g-2-1">
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2>{{ type_badge(a.appeal_type) }} {{ status_badge(a.status) }}</h2><span class="muted">{{ a.created_at|dt }}</span></div>
+      {% if see_text %}
+        <div class="message">{{ a.text or '(текст не указан)' }}</div>
+        {% if a.file_id %}<a class="btn btn-ghost" href="/appeals/{{ a.id }}/file" {% if a.file_type == 'photo' %}target="_blank" rel="noopener"{% endif %}>{{ icon("paperclip") }}{{ 'Открыть фото' if a.file_type == 'photo' else 'Скачать документ' }}</a>{% endif %}
+      {% else %}
+        <div class="notice">Текст обращения доступен только руководителю и юристу (конфиденциальность).</div>
+      {% endif %}
+    </div>
+
+    {% if a.admin_comment %}
+    <div class="card card-answer">
+      <div class="card-head"><h2>Ответ</h2><span class="muted">{{ a.answered_by }} · {{ a.answered_at|dt }}</span></div>
+      <div class="message">{{ a.admin_comment }}</div>
+    </div>
+    {% elif can_reply %}
+    <form class="card" method="post" action="/appeals/{{ a.id }}/reply">
+      <input type="hidden" name="csrf" value="{{ csrf }}">
+      <div class="card-head"><h2>Ответить сотруднику</h2><span class="muted">будет отправлено в Telegram</span></div>
+      <label class="field"><span class="sr">Текст ответа</span>
+        <textarea id="reply" name="text" rows="6" maxlength="3500" data-max="3500" required placeholder="Напишите ответ…"></textarea></label>
+      <div class="row between"><span class="muted small" data-counter-for="reply"></span><button class="btn btn-primary" type="submit">{{ icon("send") }}Отправить ответ</button></div>
+    </form>
+    {% endif %}
+  </div>
+
+  <div class="stack">
+    <div class="card">
+      <div class="card-head"><h2>Детали</h2></div>
+      <dl class="dl">
+        <dt>Автор</dt><dd>{{ 'Аноним (сообщение о коррупции)' if a.appeal_type == 'corruption' else a.full_name }}</dd>
+        {% if see_text %}
+          <dt>Telegram</dt><dd>{% if a.username %}@{{ a.username }}{% else %}—{% endif %} <span class="muted">· ID {{ a.telegram_id }}</span></dd>
+        {% endif %}
+        <dt>Создано</dt><dd>{{ a.created_at|dt }}</dd>
+        <dt>Отвечено</dt><dd>{{ a.answered_at|dt if a.answered_at else '—' }}</dd>
+      </dl>
+      {% if a.status != 'javob_berildi' %}
+      <form class="row" method="post" action="/appeals/{{ a.id }}/status">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <select name="status" aria-label="Статус">
+          <option value="yangi" {{ 'selected' if a.status == 'yangi' }}>Новое</option>
+          <option value="v_rabote" {{ 'selected' if a.status == 'v_rabote' }}>В работе</option>
+        </select>
+        <button class="btn btn-ghost" type="submit">Сменить статус</button>
+      </form>
+      {% endif %}
+    </div>
+    <div class="card">
+      <div class="card-head"><h2>История</h2></div>
+      {% if history %}<ul class="timeline compact">{% for r in history %}<li><span><b>{{ r.actor_name }}</b> — {{ ACTIONS.get(r.action, r.action) }}</span><time class="muted">{{ r.ts|dt }}</time></li>{% endfor %}</ul>
+      {% else %}<p class="muted pad">Действий пока нет.</p>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

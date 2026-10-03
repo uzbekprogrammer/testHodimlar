@@ -1,0 +1,59 @@
+{% from "_macros.html" import icon %}
+<!doctype html>
+<html lang="ru" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="color-scheme" content="light dark">
+  <title>{% block title %}{% endblock %} · {{ PLATFORM }}</title>
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <script src="/static/theme.js"></script>
+  <link rel="stylesheet" href="/static/app.css?v=2">
+</head>
+<body>
+{% if user %}
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="/">
+      <span class="brand-mark">{{ icon("bolt") }}</span>
+      <span><b>{{ PLATFORM }}</b><small>{{ BOT_NAME }}</small></span>
+    </a>
+    <nav class="nav" aria-label="Основная навигация">
+      {% for href, label, ic, _r in nav %}
+        <a href="{{ href }}" class="{{ 'active' if (path == href or (href != '/' and path.startswith(href + '/'))) }}">{{ icon(ic) }}<span>{{ label }}</span></a>
+      {% endfor %}
+    </nav>
+    <div class="sidebar-foot">
+      <a class="usercard" href="/profile" title="Профиль и безопасность">
+        <span class="avatar">{{ user.full_name[:1]|upper }}</span>
+        <span><b>{{ user.full_name }}</b><small>{{ ROLE_LABELS[user.role] }}</small></span>
+      </a>
+      <form method="post" action="/logout">
+        <input type="hidden" name="csrf" value="{{ csrf }}">
+        <button class="nav-btn" type="submit">{{ icon("logout") }}<span>Выйти</span></button>
+      </form>
+    </div>
+  </aside>
+  <div class="scrim"></div>
+  <div class="main">
+    <header class="topbar">
+      <button class="icon-btn menu-btn" data-menu-toggle aria-label="Меню">{{ icon("menu") }}</button>
+      <h1>{% block h1 %}{% endblock %}</h1>
+      <div class="topbar-actions">{% block actions %}{% endblock %}
+        <button class="icon-btn" data-theme-toggle aria-label="Сменить тему" title="Светлая / тёмная тема">{{ icon("sun") }}</button>
+      </div>
+    </header>
+    <main class="content">
+      {% if flash_ok %}<div class="flash flash-ok" role="status">{{ icon("check") }}{{ flash_ok }}</div>{% endif %}
+      {% if flash_err %}<div class="flash flash-err" role="alert">{{ icon("x") }}{{ flash_err }}</div>{% endif %}
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+{% else %}
+{% block bare %}{% endblock %}
+{% endif %}
+<script src="/static/app.js?v=1" defer></script>
+</body>
+</html>

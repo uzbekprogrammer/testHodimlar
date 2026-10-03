@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% from "_macros.html" import type_badge, status_badge %}
+{% block title %}{{ u.full_name }}{% endblock %}
+{% block h1 %}{{ u.full_name }}{% endblock %}
+{% block actions %}<a class="btn btn-ghost" href="/users">← К списку</a>{% endblock %}
+{% block content %}
+<div class="grid g-1-2">
+  <div class="card">
+    <div class="card-head"><h2>Профиль</h2></div>
+    <dl class="dl">
+      <dt>Должность</dt><dd>{{ u.position }}</dd><dt>Отдел</dt><dd>{{ u.department }}</dd>
+      <dt>Телефон</dt><dd>{{ u.phone }}</dd><dt>Telegram</dt><dd>{% if u.username %}@{{ u.username }}{% else %}—{% endif %} <span class="muted">· ID {{ u.telegram_id }}</span></dd>
+      <dt>Регистрация</dt><dd>{{ u.registered_at|dt }}</dd>
+    </dl>
+  </div>
+  <div class="stack">
+    <div class="card flush"><div class="card-head pad"><h2>Обращения</h2></div>
+      {% if appeals %}<table class="table table-hover"><tbody>{% for a in appeals %}<tr>
+        <td><a class="strong" href="/appeals/{{ a.id }}">#{{ a.id }}</a></td><td>{{ type_badge(a.appeal_type) }}</td><td>{{ status_badge(a.status) }}</td><td class="muted">{{ a.created_at|dt }}</td></tr>{% endfor %}</tbody></table>
+      {% else %}<p class="muted pad">Нет обращений.</p>{% endif %}
+    </div>
+    <div class="card flush"><div class="card-head pad"><h2>Записи на приём</h2></div>
+      {% if appts %}<table class="table"><tbody>{% for p in appts %}<tr><td>{{ p.appointment_date[8:10] }}.{{ p.appointment_date[5:7] }}.{{ p.appointment_date[:4] }} {{ p.appointment_time }}</td><td>{{ status_badge(p.status) }}</td><td class="muted">{{ p.reason|truncate(60) }}</td></tr>{% endfor %}</tbody></table>
+      {% else %}<p class="muted pad">Нет записей.</p>{% endif %}
+    </div>
+    <p class="muted small">Сообщения о коррупции анонимны и не привязываются к профилю сотрудника.</p>
+  </div>
+</div>
+{% endblock %}

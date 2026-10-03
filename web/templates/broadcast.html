@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Рассылка{% endblock %}
+{% block h1 %}Рассылка сотрудникам{% endblock %}
+{% block content %}
+{% if result %}
+<div class="card card-answer"><div class="card-head"><h2>Рассылка выполнена</h2></div>
+  <p>Доставлено: <b>{{ result.sent }}</b> · Не доставлено: <b>{{ result.failed }}</b></p>
+  <a class="btn btn-ghost" href="/broadcast">Новая рассылка</a></div>
+{% elif preview %}
+<form class="card" method="post" action="/broadcast">
+  <input type="hidden" name="csrf" value="{{ csrf }}"><input type="hidden" name="text" value="{{ text }}"><input type="hidden" name="confirm" value="1">
+  <div class="card-head"><h2>Подтвердите отправку</h2></div>
+  <p class="muted">Сообщение получат все зарегистрированные сотрудники ({{ users }}).</p>
+  <div class="message">{{ text }}</div>
+  <div class="row"><button class="btn btn-primary" type="submit">{{ icon("send") }}Отправить</button><a class="btn btn-ghost" href="/broadcast">Изменить</a></div>
+</form>
+{% else %}
+<form class="card" method="post" action="/broadcast">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <div class="card-head"><h2>Новое сообщение</h2><span class="muted">получателей: {{ users }}</span></div>
+  <label class="field"><span class="sr">Текст</span><textarea id="bc" name="text" rows="8" maxlength="3500" data-max="3500" required placeholder="Текст рассылки…">{{ text }}</textarea></label>
+  <div class="row between"><span class="muted small" data-counter-for="bc"></span><button class="btn btn-primary" type="submit">Предпросмотр</button></div>
+</form>
+{% endif %}
+{% endblock %}

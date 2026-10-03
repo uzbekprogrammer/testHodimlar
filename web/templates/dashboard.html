@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, type_badge, status_badge, bar_chart %}
+{% block title %}Обзор{% endblock %}
+{% block h1 %}Обзор{% endblock %}
+{% block actions %}<span class="live"><i></i>Обновлено <span data-live-stamp>только что</span></span>{% endblock %}
+{% block content %}
+<section class="kpis" data-live-kpi>
+  <div class="kpi"><span class="kpi-label">Обращений всего</span><b class="kpi-val" data-kpi="total">{{ o.total }}</b><span class="kpi-sub">сегодня: <span data-kpi="today">{{ o.today }}</span></span></div>
+  <div class="kpi k-amber"><span class="kpi-label">Новые (без ответа)</span><b class="kpi-val" data-kpi="new">{{ o.new }}</b><span class="kpi-sub">в работе: <span data-kpi="in_work">{{ o.in_work }}</span></span></div>
+  <div class="kpi k-red"><span class="kpi-label">Просрочено &gt; 24 ч</span><b class="kpi-val" data-kpi="overdue">{{ o.overdue }}</b><span class="kpi-sub">среднее время ответа: {{ o.avg_hours }} ч</span></div>
+  <div class="kpi k-green"><span class="kpi-label">Записи на приём</span><b class="kpi-val" data-kpi="appt_pending">{{ o.appt_pending }}</b><span class="kpi-sub">ожидают решения · предстоит: <span data-kpi="appt_upcoming">{{ o.appt_upcoming }}</span></span></div>
+  <div class="kpi"><span class="kpi-label">Сотрудников в базе</span><b class="kpi-val" data-kpi="users">{{ o.users }}</b><span class="kpi-sub">зарегистрировано в боте</span></div>
+</section>
+
+<section class="grid g-2-1">
+  <div class="card">
+    <div class="card-head"><h2>Обращения за 14 дней</h2></div>
+    {{ bar_chart(chart) }}
+  </div>
+  <div class="card">
+    <div class="card-head"><h2>По типам</h2></div>
+    <div class="donut-wrap">
+      <svg class="donut" viewBox="0 0 42 42" role="img" aria-label="Распределение по типам">
+        <circle class="donut-bg" cx="21" cy="21" r="15.9155"/>
+        {% for t in types %}{% if t.n %}<circle class="donut-seg {{ t.cls }}" cx="21" cy="21" r="15.9155" stroke-dasharray="{{ t.dash }}" stroke-dashoffset="{{ t.offset }}"><title>{{ t.label }}: {{ t.n }}</title></circle>{% endif %}{% endfor %}
+        <text x="21" y="22.5" text-anchor="middle" class="donut-num">{{ o.total }}</text>
+      </svg>
+      <ul class="legend">
+        {% for t in types %}<li><i class="dot {{ t.cls }}"></i>{{ t.label }}<b>{{ t.n }}</b></li>{% endfor %}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="grid g-2">
+  {% if recent or user.role != 'secretary' %}
+  <div class="card">
+    <div class="card-head"><h2>Последние обращения</h2>{% if user.role != 'secretary' %}<a href="/appeals" class="link">Все →</a>{% endif %}</div>
+    {% if recent %}
+    <table class="table"><tbody>
+      {% for a in recent %}<tr>
+        <td><a class="strong" href="/appeals/{{ a.id }}">#{{ a.id }}</a></td>
+        <td>{{ type_badge(a.appeal_type) }}</td>
+        <td>{{ status_badge(a.status) }}</td>
+        <td class="muted right">{{ a.created_at|ago }}</td>
+      </tr>{% endfor %}
+    </tbody></table>
+    {% else %}<p class="muted pad">Обращений пока нет.</p>{% endif %}
+  </div>
+  {% endif %}
+  <div class="card">
+    <div class="card-head"><h2>{{ 'Предстоящие приёмы' if user.role == 'secretary' else 'Ждут решения руководителя' }}</h2><a href="/appointments" class="link">Все →</a></div>
+    {% if appts %}
+    <table class="table"><tbody>
+      {% for p in appts %}<tr>
+        <td><b>{{ p.appointment_date[8:10] }}.{{ p.appointment_date[5:7] }}</b> {{ p.appointment_time }}</td>
+        <td>{{ p.full_name }}</td>
+        <td class="muted">{{ p.reason|truncate(40) }}</td>
+      </tr>{% endfor %}
+    </tbody></table>
+    {% else %}<p class="muted pad">Нет записей.</p>{% endif %}
+  </div>
+</section>
+
+{% if activity %}
+<section class="card">
+  <div class="card-head"><h2>Последние действия</h2><a href="/audit" class="link">Вся история →</a></div>
+  <ul class="timeline">
+    {% for r in activity %}<li>
+      <span class="tl-src s-{{ r.source }}">{{ {'bot':'Бот','web':'Сайт','system':'Система'}[r.source] }}</span>
+      <span><b>{{ r.actor_name or '—' }}</b> — {{ ACTIONS.get(r.action, r.action) }}{% if r.entity_id %} #{{ r.entity_id }}{% endif %}</span>
+      <time class="muted">{{ r.ts|ago }}</time>
+    </li>{% endfor %}
+  </ul>
+</section>
+{% endif %}
+{% endblock %}

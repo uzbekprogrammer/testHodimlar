@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Администраторы{% endblock %}
+{% block h1 %}Администраторы{% endblock %}
+{% block content %}
+{% if created %}
+<div class="card card-secret" role="alert">
+  <div class="card-head"><h2>Учётные данные — {{ created.name }}</h2></div>
+  {% if created.password %}
+  <p class="muted">Пароль показывается <b>один раз</b>. Передайте его сотруднику; при первом входе потребуется сменить пароль.</p>
+  <div class="secret-row"><span class="muted">Логин</span><code>{{ created.username }}</code><button class="btn btn-ghost" type="button" data-copy="{{ created.username }}">Копировать</button></div>
+  <div class="secret-row"><span class="muted">Пароль</span><code>{{ created.password }}</code><button class="btn btn-ghost" type="button" data-copy="{{ created.password }}">Копировать</button></div>
+  {% else %}<p class="muted">Администратор добавлен только для Telegram-бота (без доступа на сайт).</p>{% endif %}
+</div>
+{% endif %}
+
+<div hidden>{% for a in items %}<form id="f{{ a.id }}" method="post" action="/admins/{{ a.id }}/update"><input type="hidden" name="csrf" value="{{ csrf }}"></form>{% endfor %}</div>
+<div class="card flush">
+  <div class="table-wrap"><table class="table">
+    <thead><tr><th>Ф.И.О.</th><th>Роль</th><th>Telegram ID</th><th>Логин</th><th>Активен</th><th>Последний вход</th><th></th></tr></thead>
+    <tbody>
+    {% for a in items %}
+    <tr>
+      <td><input form="f{{ a.id }}" name="full_name" value="{{ a.full_name }}" maxlength="80" required aria-label="Имя"></td>
+      <td><select form="f{{ a.id }}" name="role" aria-label="Роль">{% for k, v in roles.items() %}<option value="{{ k }}" {{ 'selected' if a.role == k }}>{{ v }}</option>{% endfor %}</select></td>
+      <td><input form="f{{ a.id }}" name="telegram_id" value="{{ a.telegram_id or '' }}" inputmode="numeric" pattern="[0-9]*" maxlength="15" aria-label="Telegram ID"></td>
+      <td>{% if a.username %}<code>{{ a.username }}</code>{% else %}<span class="muted">нет доступа</span>{% endif %}</td>
+      <td><label class="switch"><input form="f{{ a.id }}" type="checkbox" name="is_active" value="1" {{ 'checked' if a.is_active }}><span></span></label></td>
+      <td class="muted nowrap">{{ a.last_login|dt if a.last_login else '—' }}</td>
+      <td class="nowrap actions">
+        <button form="f{{ a.id }}" class="btn btn-primary" type="submit">Сохранить</button>
+        <form method="post" action="/admins/{{ a.id }}/reset-password" data-confirm="Создать новый пароль для «{{ a.full_name }}»? Старый перестанет работать."><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn btn-ghost" type="submit" title="Выдать доступ / сбросить пароль">Пароль</button></form>
+        {% if a.id != user.id %}<form method="post" action="/admins/{{ a.id }}/delete" data-confirm="Удалить администратора «{{ a.full_name }}»? Это действие необратимо."><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn btn-danger-ghost" type="submit">Удалить</button></form>{% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</div>
+
+<form class="card" method="post" action="/admins/add">
+  <input type="hidden" name="csrf" value="{{ csrf }}">
+  <div class="card-head"><h2>Добавить администратора</h2></div>
+  <div class="filters inline">
+    <label class="field grow"><span>Ф.И.О.</span><input name="full_name" required minlength="2" maxlength="80"></label>
+    <label class="field"><span>Роль</span><select name="role">{% for k, v in roles.items() %}<option value="{{ k }}" {{ 'selected' if k == 'secretary' }}>{{ v }}</option>{% endfor %}</select></label>
+    <label class="field"><span>Telegram ID (для бота)</span><input name="telegram_id" inputmode="numeric" pattern="[0-9]*" maxlength="15"></label>
+    <label class="field"><span>Логин (для сайта)</span><input name="username" pattern="[A-Za-z0-9_.\-]{3,32}" maxlength="32" autocomplete="off"></label>
+    <button class="btn btn-primary" type="submit">Добавить</button>
+  </div>
+  <p class="muted small">Укажите Telegram ID — для доступа к панели в боте, логин — для входа на сайт (пароль будет сгенерирован). Можно оба.</p>
+</form>
+{% endblock %}

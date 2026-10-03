@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Профиль{% endblock %}
+{% block h1 %}Профиль и безопасность{% endblock %}
+{% block content %}
+{% if user.must_change_pw %}<div class="flash flash-err" role="alert">Вы используете временный пароль. Задайте новый, чтобы продолжить работу.</div>{% endif %}
+<div class="grid g-1-2">
+  <div class="card">
+    <div class="card-head"><h2>Учётная запись</h2></div>
+    <dl class="dl"><dt>Имя</dt><dd>{{ user.full_name }}</dd><dt>Роль</dt><dd>{{ ROLE_LABELS[user.role] }}</dd><dt>Логин</dt><dd>{{ user.username }}</dd><dt>Последний вход</dt><dd>{{ user.last_login|dt }}</dd></dl>
+  </div>
+  <form class="card" method="post" action="/profile/password" autocomplete="off">
+    <input type="hidden" name="csrf" value="{{ csrf }}">
+    <div class="card-head"><h2>Смена пароля</h2></div>
+    <label class="field"><span>Текущий пароль</span><input type="password" name="current" required autocomplete="current-password" maxlength="256"></label>
+    <label class="field"><span>Новый пароль</span><input type="password" name="new" required minlength="8" autocomplete="new-password" maxlength="256"></label>
+    <label class="field"><span>Повторите новый пароль</span><input type="password" name="repeat" required minlength="8" autocomplete="new-password" maxlength="256"></label>
+    <p class="muted small">Минимум 8 символов, должны быть и буквы, и цифры. После смены остальные сессии завершаются.</p>
+    <button class="btn btn-primary" type="submit">Сохранить пароль</button>
+  </form>
+</div>
+<div class="card flush">
+  <div class="card-head pad"><h2>Активные сессии</h2>
+    <form method="post" action="/profile/sessions/close-others"><input type="hidden" name="csrf" value="{{ csrf }}"><button class="btn btn-ghost" type="submit">Завершить остальные</button></form></div>
+  <div class="table-wrap"><table class="table"><thead><tr><th>Начало</th><th>Последняя активность</th><th>IP</th><th>Устройство</th><th></th></tr></thead><tbody>
+    {% for s in sessions %}<tr><td>{{ s.created_at|dt }}</td><td>{{ s.last_seen|dt }}</td><td>{{ s.ip }}</td><td class="details">{{ s.user_agent }}</td><td>{% if s.id == current_sid %}<span class="badge b-green">эта сессия</span>{% endif %}</td></tr>{% endfor %}
+  </tbody></table></div>
+</div>
+{% endblock %}

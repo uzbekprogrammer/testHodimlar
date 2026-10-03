@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon, pager %}
+{% block title %}Сотрудники{% endblock %}
+{% block h1 %}Сотрудники{% endblock %}
+{% block content %}
+<form class="filters card" method="get">
+  <label class="field grow"><span>Поиск</span><input name="q" value="{{ q }}" placeholder="Ф.И.О., телефон, должность, @username" maxlength="80"></label>
+  <label class="field"><span>Отдел</span><select name="dep" data-autosubmit><option value="">Все</option>{% for d in deps %}<option value="{{ d }}" {{ 'selected' if dep == d }}>{{ d }}</option>{% endfor %}</select></label>
+  <button class="btn btn-primary" type="submit">{{ icon("search") }}Найти</button>
+</form>
+<div class="card flush">
+  {% if rows %}
+  <div class="table-wrap"><table class="table table-hover">
+    <thead><tr><th>Ф.И.О.</th><th>Должность</th><th>Отдел</th><th>Телефон</th><th>Обращений</th><th>Приёмов</th><th>Регистрация</th></tr></thead>
+    <tbody>{% for u in rows %}<tr>
+      <td><a class="strong" href="/users/{{ u.telegram_id }}">{{ u.full_name }}</a>{% if u.username %}<div class="muted small">@{{ u.username }}</div>{% endif %}</td>
+      <td>{{ u.position }}</td><td>{{ u.department }}</td><td class="nowrap">{{ u.phone }}</td>
+      <td>{{ u.appeals_n }}</td><td>{{ u.appts_n }}</td><td class="muted nowrap">{{ u.registered_at|dt }}</td>
+    </tr>{% endfor %}</tbody>
+  </table></div>
+  {% else %}<p class="empty muted">Сотрудники не найдены.</p>{% endif %}
+</div>
+<p class="muted small">Найдено: {{ total }}</p>
+{{ pager(page, pages, '/users?q=' ~ q|urlencode ~ '&dep=' ~ dep|urlencode) }}
+{% endblock %}

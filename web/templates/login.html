@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_macros.html" import icon %}
+{% block title %}Вход{% endblock %}
+{% block bare %}
+<div class="login">
+  <section class="login-hero">
+    <div class="hero-inner">
+      <span class="brand-mark big">{{ icon("bolt") }}</span>
+      <h2>{{ PLATFORM }}</h2>
+      <p class="lead">Платформа обращений сотрудников: личные вопросы, предложения, сообщения о коррупции и запись на приём к руководителю — в одном окне.</p>
+      <ul class="hero-points">
+        <li>{{ icon("inbox") }}Все обращения из «{{ BOT_NAME }}» в Telegram</li>
+        <li>{{ icon("pulse") }}Мониторинг сроков ответа в реальном времени</li>
+        <li>{{ icon("history") }}Полная история действий администраторов</li>
+        <li>{{ icon("shield") }}Доступ по ролям, защита от подбора паролей</li>
+      </ul>
+    </div>
+  </section>
+  <section class="login-panel">
+    <form class="login-card" method="post" action="/login" autocomplete="on">
+      <h1>Вход в панель</h1>
+      <p class="muted">Введите логин и пароль, выданные администратором.</p>
+      {% if error %}<div class="flash flash-err" role="alert">{{ icon("x") }}{{ error }}</div>{% endif %}
+      <input type="hidden" name="token" value="{{ token }}">
+      <label class="field"><span>Логин</span>
+        <input name="username" value="{{ username }}" autocomplete="username" required maxlength="64" autofocus>
+      </label>
+      <label class="field"><span>Пароль</span>
+        <input name="password" type="password" autocomplete="current-password" required maxlength="256">
+      </label>
+      <button class="btn btn-primary btn-block" type="submit">Войти</button>
+      <p class="muted small">Нет доступа? Обратитесь к суперадминистратору — он создаст учётную запись.</p>
+    </form>
+  </section>
+</div>
+{% endblock %}
